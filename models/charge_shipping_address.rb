@@ -1,4 +1,4 @@
-require_relative 'application'
+require_relative 'application_record'
 
 class ChargeShippingAddress < ActiveRecord::Base
   include ApplicationRecord
