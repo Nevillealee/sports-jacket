@@ -126,6 +126,7 @@ class EllieListener < Sinatra::Base
         status: 'ACTIVE',
         customer_id: customer_id,
       )
+      .order(:next_charge_scheduled_at)
     output = data.map{|sub| transform_subscriptions(sub, sub.orders)}
     [200, @default_headers, output.to_json]
   end
