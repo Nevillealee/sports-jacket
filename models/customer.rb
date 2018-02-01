@@ -1,6 +1,6 @@
 require_relative '../lib/recharge_active_record'
 require_relative '../lib/async'
-require_relative 'application'
+require_relative 'application_record'
 
 class Customer < ActiveRecord::Base
   include ApplicationRecord
