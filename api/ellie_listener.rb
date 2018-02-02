@@ -283,6 +283,7 @@ class EllieListener < Sinatra::Base
       .skippable_products(time: time, theme_id: params[:theme_id])
       .where(status: 'ACTIVE')
       .where(next_charge_sql, Time.current.beginning_of_month, Time.current.end_of_month)
+      .order(:next_charge_scheduled_at)
       .map do |sub|
         skippable = sub.skippable?(time: time, theme_id: params[:theme_id])
         switchable = sub.switchable?(time: time, theme_id: params[:theme_id])
