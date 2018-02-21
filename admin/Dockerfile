@@ -1,24 +1,19 @@
-FROM ruby:2.4.0
+FROM ruby:2.5-alpine
 
-MAINTAINER FamBrands
+ENV PAGER=less
+VOLUME /tmp
+EXPOSE 9292
 
-EXPOSE 5678 9292
+RUN mkdir -p /app && \
+  gem install bundler && \
+  apk add --update --no-cache less sqlite-dev postgresql-dev tzdata && \
+  apk add --update --no-cache --virtual build_deps \
+    git ruby-dev make gcc musl-dev
 
-ENV RACK_ENV=production
-ENV APP_NAME=production_pull
-ENV DATABASE_URL=""
-ENV RECHARGE_ACCESS_TOKEN=""
-ENV RECHARGE_SLEEP_TIME=1
-ENV REDIS_URL=""
-
-VOLUME /app/logs
 WORKDIR /app
-CMD ["puma"]
-
-# update bundler to prevent errors concerning the lockfile
-RUN gem install --no-document bundler
 COPY Gemfile Gemfile.lock /app/
-RUN bundle install --deployment
+RUN bundle install && apk del build_deps
 COPY ./ /app/
 
-WORKDIR /app/admin/
+#CMD ["shotgun", "--host", "0.0.0.0", "-r", "./config/environment.rb"]
+CMD ["rackup", "--host", "0.0.0.0"]
