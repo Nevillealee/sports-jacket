@@ -12,7 +12,7 @@ gem 'rake'
 gem 'redis', '=3.3.5'
 gem 'resque'
 gem 'shopify_api'
-gem 'sinatra', require: 'sinatra/base'
+gem 'sinatra', '=2.0.1', require: 'sinatra/base'
 gem 'sinatra-activerecord'
 gem 'recharge-api'
 
