@@ -22,14 +22,8 @@ group :development do
   gem 'rubocop'
 end
 
-# Added at 2017-12-08 11:33:42 -0800 by ryan:
-gem "grape", "~> 1.0"
-
 # Added at 2017-12-08 11:42:19 -0800 by ryan:
 gem "rack-cors", "~> 1.0"
-
-# Added at 2017-12-08 13:47:02 -0800 by ryan:
-gem "grape-entity", "~> 0.6.1"
 
 # Added at 2017-12-11 11:12:35 -0800 by ryan:
 gem "liquid", "~> 4.0"
