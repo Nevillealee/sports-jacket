@@ -10,7 +10,7 @@ RUN mkdir -p /app && \
   apk add --update --no-cache --virtual build_deps \
     git ruby-dev make gcc musl-dev
 
-WORKDIR /app
+WORKDIR /app/admin
 COPY Gemfile Gemfile.lock /app/
 RUN bundle install && apk del build_deps
 COPY ./ /app/

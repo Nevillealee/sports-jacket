@@ -1,5 +1,5 @@
 source "https://rubygems.org"
-ruby "2.4.0"
+ruby "2.5.0"
 gem 'activerecord'
 gem 'activesupport'
 gem 'dotenv'
@@ -15,6 +15,7 @@ gem 'shopify_api'
 gem 'sinatra', '=2.0.1', require: 'sinatra/base'
 gem 'sinatra-activerecord'
 gem 'recharge-api'
+gem 'sendgrid-ruby'
 
 group :development do
   gem 'pry'
