@@ -4,7 +4,7 @@ services:
   redis:
     image: redis
     ports:
-      - 6379:6379
+      - 6379
     networks:
       - backend
       - default
@@ -18,7 +18,7 @@ services:
       dockerfile: worker/Dockerfile.resque_web
     env_file: .env.docker
     ports:
-      - 5678:5678
+      - 5678
     networks:
       - backend
       - default
