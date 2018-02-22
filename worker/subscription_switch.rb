@@ -24,6 +24,9 @@ class SubscriptionSwitch
 
     puts body
 
+    #Below for email to customer
+    
+    params = {"subscription_id" => subscription_id, "action" => "switching_product", "details" => temp_hash   }
 
 
     my_update_sub = HTTParty.put("https://api.rechargeapps.com/subscriptions/#{subscription_id}", :headers => recharge_change_header, :body => body, :timeout => 80)
@@ -34,12 +37,14 @@ class SubscriptionSwitch
 
     update_success = false
     if my_update_sub.code == 200
+      Resque.enqueue(SendEmailToCustomer, params)
 
       #if 200 == 200
       update_success = true
       puts "****** Hooray We have no errors **********"
       Resque.logger.info("****** Hooray We have no errors **********")
     else
+      Resque.enqueue(SendEmailToCS, params)
       puts "We were not able to update the subscription"
       Resque.logger.info("We were not able to update the subscription")
     end

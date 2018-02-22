@@ -30,8 +30,15 @@ class SubscriptionSkip
       my_update_sub = HTTParty.post("https://api.rechargeapps.com/subscriptions/#{subscription_id}/set_next_charge_date", :headers => recharge_change_header, :body => body, :timeout => 80)
       update_success = my_update_sub.success?
       puts my_update_sub.inspect
+      #Email results to customer
+      new_date = {"date" => next_charge_str}
+      params = {"subscription_id" => subscription_id, "action" => "skipping", "details" => new_date   }
+      Resque.enqueue(SendEmailToCustomer, params)
+
       Resque.logger.info(my_update_sub.inspect)
     rescue Exception => e
+      #send error email to Customer service
+      Resque.enqueue(SendEmailToCS, params)
       Resque.logger.error(e.inspect)
     end
 
