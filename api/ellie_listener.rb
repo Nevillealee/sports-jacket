@@ -115,6 +115,28 @@ class EllieListener < Sinatra::Base
     puts "handler timezone: #{Time.zone.inspect}"
     shopify_id = params['shopify_id']
     logger.debug params.inspect
+
+    if shopify_id.nil?
+      return [400, @default_headers, JSON.generate(error: 'shopify_id required')]
+    end
+    customer_id = Customer.find_by!(shopify_customer_id: shopify_id).customer_id
+    time = Time.zone.parse params[:time] rescue Time.zone.now
+    data = Subscription
+      .current_products(time: time, theme_id: params[:theme_id])
+      .where(
+        status: 'ACTIVE',
+        customer_id: customer_id,
+      )
+      .order(:next_charge_scheduled_at)
+    output = data.map{|sub| transform_subscriptions(sub, sub.orders)}
+    [200, @default_headers, output.to_json]
+  end
+
+  get '/subscriptions_properties' do
+    puts "handler timezone: #{Time.zone.inspect}"
+    shopify_id = params['shopify_id']
+    logger.debug params.inspect
+
     if shopify_id.nil?
       return [400, @default_headers, JSON.generate(error: 'shopify_id required')]
     end
@@ -325,9 +347,9 @@ class EllieListener < Sinatra::Base
       sizes: sub.sizes,
       prepaid: sub.prepaid?,
       prepaid_shipping_at: sub.shipping_at.try{|time| time.strftime('%Y-%m-%d')},
+      skippable: sub.skippable?,
+      can_choose_alt_product: sub.switchable?
     }
   end
 
 end
-
-
