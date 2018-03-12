@@ -12,7 +12,11 @@ class EllieAdmin < Sinatra::Base
     set :server, :puma
     set :dump_errors, true
     set :static, true
-    #set :protection, :except => [:json_csrf]
+
+    # set this in development to avoid:
+    # WARN -- : attack prevented by Rack::Protection::JsonCsrf.
+    # Remember to comment it out in production
+    # set :protection, :except => [:json_csrf]
 
     mime_type :application_javascript, 'application/javascript'
     mime_type :application_json, 'application/json'

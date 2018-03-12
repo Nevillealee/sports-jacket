@@ -12,7 +12,11 @@ class EllieListener < Sinatra::Base
     enable :logging
     set :server, :puma
     set :database, ENV['DATABASE_URL']
-    #set :protection, :except => [:json_csrf]
+
+    # set this in development to avoid:
+    # WARN -- : attack prevented by Rack::Protection::JsonCsrf.
+    # Remember to comment it out in production
+    # set :protection, :except => [:json_csrf]
     mime_type :application_javascript, 'application/javascript'
     mime_type :application_json, 'application/json'
 
@@ -279,6 +283,7 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
+
     if Time.zone.now.day < 5
       if my_action == "skip_month"
         Resque.enqueue_to(:skip_product, 'SubscriptionSkip', params)
