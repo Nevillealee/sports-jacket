@@ -7,3 +7,8 @@
 /logs
 puma.state
 elm-stuff
+Dockerfile
+scripts/2018_03/
+staging_alternate_products.csv
+staging_feb2018_switchable_products.csv
+staging_matching_products.csv
