@@ -1,0 +1,20 @@
+development:
+  adapter: postgresql
+  encoding: unicode
+  #database: ellieactive_development
+  pool: 2
+  url: <%= ENV['DATABASE_URL'] %>
+
+test:
+  adapter: postgresql
+  encoding: unicode
+  #database: ellieactive_test
+  pool: 2
+  url: <%= ENV['DATABASE_URL'] %>
+
+production:
+  adapter: postgresql
+  encoding: unicode
+  #database: ellieactive_production
+  pool: 2
+  url: <%= ENV['DATABASE_URL'] %>
