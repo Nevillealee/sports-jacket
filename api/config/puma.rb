@@ -2,7 +2,7 @@ root = "#{Dir.getwd}"
 
 environment ENV['RACK_ENV'] || 'development'
 
-#activate_control_app "tcp://127.0.0.1:9293"
+activate_control_app "tcp://127.0.0.1:9293"
 bind "tcp://0.0.0.0:9292"
 rackup "#{root}/config.ru"
 daemonize false
