@@ -937,7 +937,7 @@ module DetermineInfo
 
           my_insert = "insert into skippable_products (product_title, product_id, threepk) values ($1, $2, $3)"
         @conn.prepare('statement1', "#{my_insert}")
-        CSV.foreach('feb2018_switchable_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
+        CSV.foreach('staging_march2018_switchable_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
           #puts row.inspect
           prod_title = row['product_title']
           prod_id = row['product_id']
@@ -955,7 +955,7 @@ module DetermineInfo
 
       my_insert = "insert into matching_products (new_product_title, incoming_product_id, threepk, outgoing_product_id) values ($1, $2, $3, $4)"
       @conn.prepare('statement1', "#{my_insert}")
-      CSV.foreach('matching_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
+      CSV.foreach('staging_matching_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
         #puts row.inspect
         title = row['new_product_title']
         incoming_prod_id = row['incoming_product_id']
@@ -975,7 +975,7 @@ module DetermineInfo
 
       my_insert = "insert into alternate_products (product_title, product_id, variant_id, sku, product_collection) values ($1, $2, $3, $4, $5)"
       @conn.prepare('statement1', "#{my_insert}")
-      CSV.foreach('alternate_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
+      CSV.foreach('staging_alternate_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
         #puts row.inspect
         title = row['product_title']
         prod_id = row['product_id']

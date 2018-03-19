@@ -11,13 +11,16 @@ class SendEmailToCustomer
     def self.perform(params)
         Resque.logger = Logger.new("#{Dir.getwd}/logs/send_emails_resque.log")
         puts params.inspect
+        Resque.logger.info params.inspect
 
         subscription_id = params['subscription_id']
         myaction = params['action']
         details = params['details']
 
         puts "subscription_id = #{subscription_id}"
+        Resque.logger.info "subscription_id = #{subscription_id}"
         subscription = Subscription.find(subscription_id)
+        Resque.logger.info "Subscription is #{subscription.inspect}"
         puts "Subscription is #{subscription.inspect}"
         customer_id = subscription.customer_id
         puts "Customer_id = #{customer_id}"
@@ -43,6 +46,7 @@ class SendEmailToCustomer
                 content = Content.new(type: 'text/plain', value: mybody)
             when 'switching_product'
                 puts "switching product"
+                
                 my_details = "Your new subscription is for: #{details['product_title']}"
                 puts "my_details for content = #{my_details}"
                 mybody = "Dear #{first_name} #{last_name}:\n\n Here is your confirmation of the change to your subscription:\n\n #{my_details} \n\n Your friends at Ellie."
@@ -53,10 +57,16 @@ class SendEmailToCustomer
             when 'skipping'
                 puts "skipping this month"
                 #Skip Month code here
-                my_details = "Your new charge date is: #{details['date']}"
+                puts "details = #{details.inspect}"
+                new_charge_date = details['date']
+                puts "new_charge_date = #{new_charge_date}"
+                
+                my_details = "Your new charge date is: #{new_charge_date}"
                 mybody = "Dear #{first_name} #{last_name}:\n\n Here is your confirmation of the new charge date for your subscription:\n\n #{my_details} \n\n Your friends at Ellie."
                 subject = "Confirmation of Skip for Your Subscription"
                 content = Content.new(type: 'text/plain', value: mybody)
+                puts "All done sending email"
+                Resque.logger.info "all done sending email"
 
             else
                 puts "Doing nothing"

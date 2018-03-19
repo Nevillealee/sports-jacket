@@ -33,6 +33,7 @@ class SubscriptionSkip
       #Email results to customer
       new_date = {"date" => next_charge_str}
       params = {"subscription_id" => subscription_id, "action" => "skipping", "details" => new_date   }
+      puts "params we are sending to SendEmailToCustomer = #{params.inspect}"
       Resque.enqueue(SendEmailToCustomer, params)
 
       Resque.logger.info(my_update_sub.inspect)
