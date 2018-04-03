@@ -2,17 +2,22 @@ require_relative 'config/environment'
 require_relative '../lib/recharge_active_record'
 require_relative '../lib/logging'
 
+
+
 class EllieListener < Sinatra::Base
   register Sinatra::ActiveRecordExtension
   include Logging
 
   PAGE_LIMIT = 250
 
+  register Sinatra::CrossOrigin
+
   configure do
     enable :logging
     set :server, :puma
     set :database, ENV['DATABASE_URL']
     #set :protection, :except => [:json_csrf]
+    enable :cross_origin
     mime_type :application_javascript, 'application/javascript'
     mime_type :application_json, 'application/json'
 
@@ -40,6 +45,11 @@ class EllieListener < Sinatra::Base
 
     super
   end
+
+  before do
+    response.headers['Access-Control-Allow-Origin'] = '*'
+  end
+
 
   get '/install' do
     shop = 'elliestaging.myshopify.com'
@@ -320,6 +330,15 @@ class EllieListener < Sinatra::Base
       end
     [200, @default_headers, data.to_json]
   end
+
+  options "*" do
+    response.headers["Allow"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token"
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    200
+  end
+
+  
 
   error ActiveRecord::RecordNotFound do
     details = env['sinatra.error'].message

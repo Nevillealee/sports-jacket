@@ -1,5 +1,8 @@
 source "https://rubygems.org"
 ruby "2.4.0"
+#added Floyd Wallace 4/3/18
+gem 'sinatra-cross_origin'
+
 gem 'activerecord'
 gem 'activesupport'
 gem 'dotenv'
@@ -24,7 +27,7 @@ group :development do
 end
 
 # Added at 2017-12-08 11:42:19 -0800 by ryan:
-gem "rack-cors", "~> 1.0"
+#gem "rack-cors", "~> 1.0"
 
 # Added at 2017-12-11 11:12:35 -0800 by ryan:
 gem "liquid", "~> 4.0"

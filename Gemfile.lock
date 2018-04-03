@@ -92,6 +92,7 @@ GEM
     sinatra-activerecord (2.0.13)
       activerecord (>= 3.2)
       sinatra (>= 1.0)
+    sinatra-cross_origin (0.4.0)
     thread_safe (0.3.6)
     tilt (2.0.8)
     tzinfo (1.2.5)
@@ -125,6 +126,7 @@ DEPENDENCIES
   shopify_api
   sinatra (= 2.0.1)
   sinatra-activerecord
+  sinatra-cross_origin
 
 RUBY VERSION
    ruby 2.4.0p0
