@@ -16,6 +16,8 @@ gem 'sinatra', '=2.0.1', require: 'sinatra/base'
 gem 'sinatra-activerecord'
 gem 'recharge-api'
 gem 'sendgrid-ruby'
+#Added Floyd Wallace 4/3/18
+gem 'sinatra-cross_origin'
 
 group :development do
   gem 'pry'
@@ -24,7 +26,7 @@ group :development do
 end
 
 # Added at 2017-12-08 11:42:19 -0800 by ryan:
-gem "rack-cors", "~> 1.0"
+#gem "rack-cors", "~> 1.0"
 
 # Added at 2017-12-11 11:12:35 -0800 by ryan:
 gem "liquid", "~> 4.0"

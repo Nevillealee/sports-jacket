@@ -8,11 +8,15 @@ class EllieListener < Sinatra::Base
 
   PAGE_LIMIT = 250
 
+  register Sinatra::CrossOrigin
+
   configure do
     enable :logging
     set :server, :puma
     set :database, ENV['DATABASE_URL']
     #set :protection, :except => [:json_csrf]
+    enable :cross_origin
+
     mime_type :application_javascript, 'application/javascript'
     mime_type :application_json, 'application/json'
 
@@ -39,6 +43,10 @@ class EllieListener < Sinatra::Base
     Thread.current[:time_zone] ||= ActiveSupport::TimeZone['Pacific Time (US & Canada)']
 
     super
+  end
+
+  before do
+    response.headers['Access-Control-Allow-Origin'] = '*'
   end
 
   get '/install' do
@@ -279,7 +287,7 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if Time.zone.now.day < 5
+    if Time.zone.now.day < 50
       if my_action == "skip_month"
         Resque.enqueue_to(:skip_product, 'SubscriptionSkip', params)
       else
@@ -320,6 +328,30 @@ class EllieListener < Sinatra::Base
       end
     [200, @default_headers, data.to_json]
   end
+
+  put '/customer/:customer_id' do
+    puts "Recieved Stuff"
+    puts params
+    my_json = params
+    my_tag = params['tags']
+    if my_tag.include?("terms_and_conditions_agreed")
+      Resque.enqueue_to(:update_customer_tag, 'CustomerTagUpdate', my_json)
+      [200, {message: "Customer Tag successfully updated"}.to_json]
+    else
+      puts "Can't update customer tag, customertag must be terms_and_conditions_agreed not #{my_tag}"
+    end
+  end
+
+
+
+
+  options "*" do
+    response.headers["Allow"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token"
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    200
+  end
+
 
   error ActiveRecord::RecordNotFound do
     details = env['sinatra.error'].message
