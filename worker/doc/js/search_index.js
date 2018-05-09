@@ -1,0 +1,1 @@
+var search_data = {"index":{"searchIndex":["customertagupdate","perform()"],"longSearchIndex":["customertagupdate","customertagupdate::perform()"],"info":[["CustomerTagUpdate","","CustomerTagUpdate.html","",""],["perform","CustomerTagUpdate","CustomerTagUpdate.html#method-c-perform","(params)",""]]}}
