@@ -2,6 +2,8 @@ require_relative 'config/environment'
 require_relative '../lib/recharge_active_record'
 require_relative '../lib/logging'
 
+
+
 class EllieListener < Sinatra::Base
   register Sinatra::ActiveRecordExtension
   include Logging
@@ -16,7 +18,10 @@ class EllieListener < Sinatra::Base
     set :database, ENV['DATABASE_URL']
     #set :protection, :except => [:json_csrf]
     enable :cross_origin
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2e54c36c19f3c8f269cc01fc533d12986eff0201
     mime_type :application_javascript, 'application/javascript'
     mime_type :application_json, 'application/json'
 
@@ -49,6 +54,10 @@ class EllieListener < Sinatra::Base
     response.headers['Access-Control-Allow-Origin'] = '*'
   end
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2e54c36c19f3c8f269cc01fc533d12986eff0201
   get '/install' do
     shop = 'elliestaging.myshopify.com'
     scopes = 'read_themes, write_themes, read_orders, write_orders, read_products, read_customers, write_customers'
@@ -329,6 +338,7 @@ class EllieListener < Sinatra::Base
     [200, @default_headers, data.to_json]
   end
 
+<<<<<<< HEAD
   put '/customer/:customer_id' do
     puts "Recieved Stuff"
     puts params
@@ -345,6 +355,8 @@ class EllieListener < Sinatra::Base
 
 
 
+=======
+>>>>>>> 2e54c36c19f3c8f269cc01fc533d12986eff0201
   options "*" do
     response.headers["Allow"] = "GET, POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token"
@@ -352,6 +364,10 @@ class EllieListener < Sinatra::Base
     200
   end
 
+<<<<<<< HEAD
+=======
+  
+>>>>>>> 2e54c36c19f3c8f269cc01fc533d12986eff0201
 
   error ActiveRecord::RecordNotFound do
     details = env['sinatra.error'].message
