@@ -1600,7 +1600,8 @@ module EllieHelper
     
       def background_count_subscriptions(header_info)
         subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count", :headers => header_info)
-        my_response = JSON.parse(subscriptions)
+        #my_response = JSON.parse(subscriptions)
+        my_response = subscriptions
         my_count = my_response['count'].to_i
         return my_count
     
@@ -1613,7 +1614,8 @@ module EllieHelper
     
         #?created_at_min='2015-01-01
         subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count?updated_at_min=\'#{my_yesterday}\'", :headers => header_info)
-        my_response = JSON.parse(subscriptions)
+        #my_response = JSON.parse(subscriptions)
+        my_response = subscriptions
         my_count = my_response['count'].to_i
         return my_count
     
