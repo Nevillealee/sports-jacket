@@ -1600,7 +1600,6 @@ module EllieHelper
     
       def background_count_subscriptions(header_info)
         subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count", :headers => header_info)
-        puts subscriptions.inspect
         #my_response = JSON.parse(subscriptions)
         my_response = subscriptions
         my_count = my_response['count'].to_i
