@@ -937,7 +937,7 @@ module DetermineInfo
 
           my_insert = "insert into skippable_products (product_title, product_id, threepk) values ($1, $2, $3)"
         @conn.prepare('statement1', "#{my_insert}")
-        CSV.foreach('staging_may2018_switchable_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
+        CSV.foreach('staging_june2018_switchable_products.csv', :encoding => 'ISO-8859-1', :headers => true) do |row|
           #puts row.inspect
           prod_title = row['product_title']
           prod_id = row['product_id']
