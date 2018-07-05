@@ -15,12 +15,12 @@ gem 'rake'
 gem 'redis', '=3.3.5'
 gem 'resque'
 gem 'shopify_api'
-gem 'sinatra', '=2.0.1', require: 'sinatra/base'
+gem 'sinatra', '~>2.0.2', require: 'sinatra/base'
 gem 'sinatra-activerecord'
 gem 'recharge-api'
 gem 'sendgrid-ruby'
 #Added Floyd Wallace 4/3/18
-gem 'sinatra-cross_origin'
+#gem 'sinatra-cross_origin'
 
 group :development do
   gem 'pry'
