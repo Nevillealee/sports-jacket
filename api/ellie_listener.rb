@@ -203,6 +203,15 @@ class EllieListener < Sinatra::Base
       #res = RechargeAPI.put("/subscriptions/#{subscription_id}", {body: body_json})
       #queued = Subscription.async(:recharge_update, body)
       #ChangeSizes.perform(subscription_id, sizes)
+
+      #Add code to immediately save size changes to DB in API.
+      #puts "now sizes are #{sizes.inspect}"
+      sub = Subscription.find subscription_id
+      #Resque.logger.info(sub.inspect)
+      sub.sizes = sizes
+      sub.save!
+
+
       queued = Resque.enqueue_to(:change_sizes, 'ChangeSizes', subscription_id, sizes)
       raise 'Error updating sizes. Please try again later.' unless queued
       #line_items.each(&:save!)
@@ -274,6 +283,21 @@ class EllieListener < Sinatra::Base
     puts myjson.inspect
     my_action = myjson['action']
     if my_action == 'switch_product'
+      #Add code to immediately update subscription switch here
+      puts "Updating customer record immediately!"
+      my_real_product_id = myjson['real_alt_product_id']
+      local_sub_id = myjson['subscription_id']
+      my_new_product = AlternateProduct.find_by_product_id(my_real_product_id)
+      puts "my_new_product = #{my_new_product.inspect}"
+      local_sub = Subscription.find_by_subscription_id(local_sub_id)
+      puts "local_sub = #{local_sub.inspect}"
+      local_sub.shopify_product_id = my_new_product.product_id
+      local_sub.shopify_variant_id = my_new_product.variant_id
+      local_sub.sku = my_new_product.sku
+      local_sub.product_title = my_new_product.product_title
+      local_sub.save!
+
+
       Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
     else
       puts "Can't switch product, action must be switch product not #{my_action}"
@@ -290,7 +314,33 @@ class EllieListener < Sinatra::Base
     puts "Day of the month is #{my_now}"
     if Time.zone.now.day < 5
       if my_action == "skip_month"
-        Resque.enqueue_to(:skip_product, 'SubscriptionSkip', params)
+        #Add code to immediately skip the sub in DB only here
+        local_sub_id = params['subscription_id']
+        temp_subscription = Subscription.find_by_subscription_id(local_sub_id)
+        #code here for checking if subscription is skippable
+        if temp_subscription.skippable?
+
+          puts "temp_subscription = #{temp_subscription.inspect}"
+          local_date = temp_subscription.next_charge_scheduled_at
+          my_next_charge = temp_subscription.try(:next_charge_scheduled_at).try('+', 1.month)
+          puts "now next_charge = #{my_next_charge.inspect}"
+          #Code to prevent skipping two months ahead
+          mynow = Date.today
+          my_next_month = mynow >> 1
+          my_end_next_month = my_next_month.end_of_month
+          puts "End of next month is #{my_end_next_month.inspect}"
+          if my_next_charge <= my_end_next_month
+
+            temp_subscription.next_charge_scheduled_at = my_next_charge
+            temp_subscription.save!
+            puts "temp_subscription = #{temp_subscription.inspect}"
+            Resque.enqueue_to(:skip_product, 'SubscriptionSkip', params)
+          else
+            puts "Cannot skip to beyond next month: #{my_next_charge}"
+          end
+        else
+          puts "Subscription #{temp_subscription.inspect} is not skippable!"
+        end
       else
         puts "Cannot skip this product, action must be skip_month not #{my_action}"
       end
