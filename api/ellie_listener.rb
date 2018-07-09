@@ -288,7 +288,7 @@ class EllieListener < Sinatra::Base
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if Time.zone.now.day < 50
+    if Time.zone.now.day < 5
       if my_action == "skip_month"
         Resque.enqueue_to(:skip_product, 'SubscriptionSkip', params)
       else
