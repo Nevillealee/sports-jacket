@@ -33,6 +33,12 @@ task :subscription_pull, [:args] do |t, args|
   DetermineInfo::InfoGetter.new.handle_subscriptions(*args)
 end
 
+desc 'do testing partial pull of subscription last hour'
+task :test_subscription_pull_hour do |t|
+  DownloadRecharge::GetRechargeInfo.new.get_recharge_subscriptions_last_hour
+end
+
+
 desc 'run all tests'
 task :test do
   require 'rake/testtask'

@@ -4,6 +4,7 @@
 require_relative '../lib/logging'
 require 'shopify_api'
 require 'dotenv'
+require_relative 'resque_helper'
 Dotenv.load
 
 class CustomerTagUpdate
