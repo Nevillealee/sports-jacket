@@ -1,5 +1,7 @@
 #new_download_recharge.rb
 require_relative 'background_subs'
+require_relative 'background_full_subs'
+
 
 
 
@@ -19,13 +21,13 @@ module DownloadRecharge
           def get_recharge_subscriptions_last_hour
 
             params = {"uri" => @uri, "headers" => @my_header}
-
             Resque.enqueue(SubsBackground, params)
+       
+          end
 
-
-
-            
-            
+          def get_full_subscriptions
+            params = {"uri" => @uri, "headers" => @my_header}
+            Resque.enqueue(SubsFullBackground, params)
 
           end
 
@@ -39,6 +41,16 @@ module DownloadRecharge
               get_subs_last_hour(params)
 
             end
+          end
+
+          class SubsFullBackground
+            extend FullBackgroundSubs
+            @queue = "subs_background_full"
+            def self.perform(params)
+              get_all_subs(params)
+            end
+
+
           end
 
 

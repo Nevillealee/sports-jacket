@@ -38,6 +38,11 @@ task :test_subscription_pull_hour do |t|
   DownloadRecharge::GetRechargeInfo.new.get_recharge_subscriptions_last_hour
 end
 
+desc 'do testing full pull of all subscriptions'
+task :test_subscription_pull_full do |t|
+  DownloadRecharge::GetRechargeInfo.new.get_full_subscriptions
+end
+
 
 desc 'run all tests'
 task :test do
