@@ -1,5 +1,6 @@
 #background_subs.rb
 require_relative '../lib/recharge_limit'
+require 'active_support/core_ext/time'
 
 module BackgroundSubs
     include ReChargeLimits
@@ -36,7 +37,9 @@ module BackgroundSubs
 
     def twenty_five_min
         min_ago = 25
-        minutes_ago = DateTime.now - (min_ago/1440.0)
+        minutes_ago = DateTime.now.in_time_zone - (min_ago/1440.0)
+        puts "running configure timezone: #{Time.zone.inspect}"
+        #minutes_ago.in_time_zone('Pacific Time (US & Canada)')
         twenty_five_minutes_ago_str = minutes_ago.strftime("%Y-%m-%dT%H:%M:%S")
         puts "Twenty five minutes ago = #{twenty_five_minutes_ago_str}"
         Resque.logger.info "Twenty five minutes ago = #{twenty_five_minutes_ago_str}"
@@ -66,12 +69,12 @@ module BackgroundSubs
         
 
         twenty_five_minutes_ago_str = twenty_five_min
-
+        puts "Here twenty_five_minutes_ago_str = #{twenty_five_minutes_ago_str}"
 
         subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count?created_at_min=\'#{twenty_five_minutes_ago_str}\'", :headers => my_header)
             
         my_count = subscriptions['count'].to_i
-        current_time = DateTime.now.strftime("%Y-%m-%dT%H:%M:%S")
+        current_time = DateTime.now.in_time_zone.strftime("%Y-%m-%dT%H:%M:%S")
         puts "Time now = #{current_time}"
         puts "We have #{my_count} subscriptions created_at this past 25 minutes"
         Resque.logger.info "Time now = #{current_time}"
@@ -181,7 +184,7 @@ module BackgroundSubs
         subscriptions = HTTParty.get("https://api.rechargeapps.com/subscriptions/count?updated_at_min=\'#{twenty_five_minutes_ago_str}\'", :headers => my_header)
             
         my_count = subscriptions['count'].to_i
-        current_time = DateTime.now.strftime("%Y-%m-%dT%H:%M:%S")
+        current_time = DateTime.now.in_time_zone.strftime("%Y-%m-%dT%H:%M:%S")
         puts "Time now = #{current_time}"
         puts "We have #{my_count} subscriptions updated this past 25 minutes"
         Resque.logger.info "Time now = #{current_time}"
