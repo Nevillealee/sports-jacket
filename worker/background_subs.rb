@@ -10,7 +10,7 @@ module BackgroundSubs
         my_conn =  PG.connect(myuri.hostname, myuri.port, nil, nil, myuri.path[1..-1], myuri.user, myuri.password)
         my_delete = "delete from sub_line_items where subscription_id = \'#{id}\'"  
         my_conn.exec(my_delete) 
-        my_conn.close
+        #my_conn.close
     
       end
 
@@ -32,7 +32,7 @@ module BackgroundSubs
           
             end
         end
-        my_conn.close
+        #my_conn.close
       end
 
     def twenty_five_min
