@@ -1,5 +1,5 @@
 source "https://rubygems.org"
-ruby "2.4.0"
+ruby "2.5.0"
 #added Floyd Wallace 4/3/18
 gem 'sinatra-cross_origin'
 

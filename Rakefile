@@ -13,9 +13,41 @@ Resque.logger =
     Logger.new STDOUT, level: Logger::INFO
   end
 
+namespace :auto_config do
+  desc 'auto configures switchable table'
+  task :switchable do
+    MonthlySetup.new.switchable_config
+  end
+
+  desc 'auto configures alternate table'
+  task :alternate do
+    MonthlySetup.new.alternate_config
+  end
+
+  desc 'auto configures matching table'
+  task :matching do
+    MonthlySetup.new.matching_config
+  end
+
+ # run ellie_pull[products] then  'ruby early_product_tags.rb' (scripts/auto/early_product_tags.rb)
+  desc 'runs entire auto config block'
+  task :splat => [:alternate, :matching, :switchable]
+end
+
+# NEW (Neville 8/15/18)
+desc 'arg = products, collects, or custom_collections'
+task :ellie_pull, [:args] do |t, args|
+  DetermineInfo::InfoGetter.new.handle_ellie(*args)
+end
+
 desc 'do full or partial pull of customers and add to DB'
 task :customer_pull, [:args] do |t, args|
   DetermineInfo::InfoGetter.new.handle_customers(*args)
+end
+
+desc 'do full or partial pull of shopify customers and add to DB'
+task :shopify_customer_pull, [:args] do |t, args|
+  DetermineInfo::InfoGetter.new.handle_shopify_customers(*args)
 end
 
 desc 'do full or partial pull of charge table and associated tables and add to DB'
@@ -73,8 +105,8 @@ end
 #
 #load_skippable_products
 desc 'load this months skippable products for customers valid skippable products'
-task :load_skippable_products do |t|
-  DetermineInfo::InfoGetter.new.load_skippable_products
+task :load_switchable_products do |t|
+  DetermineInfo::InfoGetter.new.load_switchable_products
 end
 
 #load_matching_products

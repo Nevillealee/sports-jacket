@@ -16,8 +16,7 @@ class EllieListener < Sinatra::Base
     enable :logging
     set :server, :puma
     set :database, ENV['DATABASE_URL']
-    #set :protection, :except => [:json_csrf]
-    enable :cross_origin
+    set :protection, :except => [:json_csrf]
     mime_type :application_javascript, 'application/javascript'
     mime_type :application_json, 'application/json'
 
@@ -139,7 +138,7 @@ class EllieListener < Sinatra::Base
     output = data.map{|sub| transform_subscriptions(sub, sub.orders)}
     [200, @default_headers, output.to_json]
   end
-  
+
   get '/subscriptions_properties' do
     puts "handler timezone: #{Time.zone.inspect}"
     shopify_id = params['shopify_id']
@@ -381,28 +380,72 @@ class EllieListener < Sinatra::Base
   end
 
   put '/customer/:customer_id' do
-    puts "Recieved Stuff"
-    puts params
-    my_json = params
-    my_tag = params['tags']
-    if my_tag.include?("terms_and_conditions_agreed")
-      Resque.enqueue_to(:update_customer_tag, 'CustomerTagUpdate', my_json)
-      [200, {message: "Customer Tag successfully updated"}.to_json]
-    else
-      puts "Can't update customer tag, customertag must be terms_and_conditions_agreed not #{my_tag}"
+      puts "Recieved Stuff"
+      puts params
+      my_json = params
+      my_tag = params['tags']
+      if my_tag.include?("terms_and_conditions_agreed")
+        Resque.enqueue_to(:update_customer_tag, 'CustomerTagUpdate', my_json)
+        [200, {message: "Customer Tag successfully updated"}.to_json]
+      else
+        puts "Can't update customer tag, customertag must be terms_and_conditions_agreed not #{my_tag}"
+      end
+  end
+
+  put '/subscription/:subscription_id/upgrade' do |subscription_id|
+    puts 'Received stuff'
+    logger.debug params.inspect
+    myjson = params
+    puts '----------'
+    local_sub = Subscription.find(subscription_id)
+      return [404, @default_headers, {error: 'subscription not found'}.to_json] if local_sub.nil?
+    old_prod = Product.find_by shopify_id: myjson['product_id']
+    local_tags = old_prod.tags.split(",")
+
+    local_tags.each do |x|
+      if x.include? "#{Time.now.strftime('%m%y')}_"
+        @og_tag = x
+        @match_tag = x
+        @match_tag[-1] = '5'
+      end
     end
+
+    new_product_data = Product.find_by_sql("SELECT * from products WHERE tags LIKE '%#{@match_tag}%';").first
+    my_action = myjson['action']
+    myjson['new_product_id'] = new_product_data.shopify_id
+    myjson['recharge_change_header'] = @recharge_change_header
+    puts "-----upgrading from #{@og_tag} to #{new_product_data.title} with tags: #{new_product_data.tags}-----"
+
+    if my_action == "upgrade_subscription"
+      #Add code to immediately update subscription upgrade here
+      puts "Updating customer record immediately!"
+      local_sub = Subscription.find_by_subscription_id(subscription_id)
+      puts "local_sub = #{local_sub.inspect}"
+      my_variant = EllieVariant.find_by product_id: new_product_data.shopify_id
+
+      local_sub.shopify_product_id = new_product_data.shopify_id
+      local_sub.shopify_variant_id = my_variant.variant_id
+      local_sub.sku = my_variant.sku
+      local_sub.product_title = new_product_data.title
+      local_sub.price = my_variant.price
+
+      my_line_items = local_sub.raw_line_item_properties
+      my_line_items.map do |mystuff|
+          # puts "#{key}, #{value}"
+          if mystuff['name'] == 'product_collection'
+            mystuff['value'] = new_product_data.title
+          end
+      end
+
+      logger.info "updated local sub data => #{local_sub.inspect}"
+      local_sub.save!
+      Resque.enqueue_to(:upgrade_sub, 'SubscriptionUpgrade', myjson)
+    else
+      puts "Can't upgrade subscription, action must be 'upgrade_subscription' not #{my_action}"
+    end
+
+
   end
-
-
-
-
-  options "*" do
-    response.headers["Allow"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token"
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    200
-  end
-
 
   error ActiveRecord::RecordNotFound do
     details = env['sinatra.error'].message
@@ -433,8 +476,7 @@ class EllieListener < Sinatra::Base
       skippable: sub.skippable?,
       can_choose_alt_product: sub.switchable?
     }
+
   end
 
 end
-
-

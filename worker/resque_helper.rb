@@ -8,7 +8,7 @@ module ResqueHelper
         #use outgoing product_id to create the product info: sku, variant_id, product_id, product title
         #and return that hash value to the calling method.
 
-        my_three_pak = SkippableProduct.find_by_product_id(myprod_id)
+        my_three_pak = SwitchableProduct.find_by_product_id(myprod_id)
         puts "my_three_pak = #{my_three_pak.threepk}"
         puts "my incoming_product_id = #{incoming_product_id}"
         my_outgoing_product = MatchingProduct.where("incoming_product_id = ? and threepk = ?", incoming_product_id,  my_three_pak.threepk).first
@@ -28,7 +28,7 @@ module ResqueHelper
         my_line_items = my_sub.raw_line_item_properties
         puts my_line_items.inspect
         found_collection = false
-        
+
         my_line_items.map do |mystuff|
             #puts "#{key}, #{value}"
             if mystuff['name'] == 'product_collection'
@@ -47,8 +47,8 @@ module ResqueHelper
             puts "We have already updated the product_collection value!"
         end
 
-        
-        
+
+
 
 
         stuff_to_return = { "sku" => my_new_product.sku, "product_title" => my_new_product.product_title, "shopify_product_id" => my_new_product.product_id, "shopify_variant_id" => my_new_product.variant_id, "properties" => my_line_items }
@@ -57,6 +57,41 @@ module ResqueHelper
 
     end
 
+    def provide_upgrade_product(new_product_id, subscription_id)
+        my_new_product = Product.find_by shopify_id: new_product_id
+        puts "(provide_upgrade_products) new product info is #{my_new_product.inspect}"
+        #Here I need to check current subscription line item properties. If need be add or modify
+        #the product_collection to the chosen product_collection customers switch to.
+        my_sub = Subscription.find_by_subscription_id(subscription_id)
+        my_variant = EllieVariant.find_by product_id: new_product_id
+        puts my_sub.inspect
+        my_line_items = my_sub.raw_line_item_properties
+        puts my_line_items.inspect
+        found_collection = false
+        my_line_items.map do |mystuff|
+            #puts "#{key}, #{value}"
+            if mystuff['name'] == 'product_collection'
+                mystuff['value'] = my_new_product.title
+                found_collection = true
+            end
+        end
+
+        puts "my_line_items = #{my_line_items.inspect}"
+
+        if found_collection == false
+             #only if I did not find the product_collection property in the line items do I need to add it
+            puts "We are adding the product collection to the line item properties"
+            my_line_items << {"name" => "product_collection", "value" => my_new_product.title}
+        else
+            puts "We have already updated the product_collection value!"
+        end
+
+        stuff_to_return = { "price" => my_variant.price, "sku" => my_variant.sku, "product_title" => my_new_product.title, "shopify_product_id" => my_new_product.shopify_id, "shopify_variant_id" => my_variant.variant_id, "properties" => my_line_items }
+        logger.info "HASH GOING TO RECHARGE: #{stuff_to_return.inspect}"
+        return stuff_to_return
+
+
+    end
 
     def setup_subscription_update(params)
         uri = URI.parse(ENV['DATABASE_URL'])
@@ -84,7 +119,7 @@ module ResqueHelper
         bad_prod_id2 = "10870682450"
         bad_prod_id3 = "44383469586"
         bad_prod_id4 = "820544081"
-        
+
 
         subs_update = "insert into subscriptions_updated (subscription_id, customer_id, updated_at, next_charge_scheduled_at, product_title, status, sku, shopify_product_id, shopify_variant_id) select subscription_id, customer_id, updated_at, next_charge_scheduled_at, product_title, status, sku, shopify_product_id, shopify_variant_id from subscriptions where status = 'ACTIVE' and updated_at > '2017-11-30' and (shopify_product_id = \'#{bad_prod_id1}\' or shopify_product_id = \'#{bad_prod_id2}\' or shopify_product_id = \'#{bad_prod_id3}\' or shopify_product_id = \'#{bad_prod_id4}\')"
 
@@ -109,16 +144,16 @@ module ResqueHelper
         #puts new_ellie_3pack_id
 
         case my_product_id
-        when new_alt_monthly_prod_id 
-        #customer has monthly box, return Alternate Monthly Box  
+        when new_alt_monthly_prod_id
+        #customer has monthly box, return Alternate Monthly Box
         stuff_to_return = {"sku" => monthly_product.sku, "product_title" => monthly_product.product_title, "shopify_product_id" => monthly_product.shopify_product_id, "shopify_variant_id" => monthly_product.shopify_variant_id}
         when new_alt3pack_prod_id
         #Customer has Ellie 3- Pack, return Alternate Ellie 3- Pack
         stuff_to_return = {"sku" => ellie_3pack.sku, "product_title" => ellie_3pack.product_title, "shopify_product_id" => ellie_3pack.shopify_product_id, "shopify_variant_id" => ellie_3pack.shopify_variant_id}
         when new_monthly_prod_id
-        stuff_to_return = {"sku" => monthly_product.sku, "product_title" => monthly_product.product_title, "shopify_product_id" => monthly_product.shopify_product_id, "shopify_variant_id" => monthly_product.shopify_variant_id}  
+        stuff_to_return = {"sku" => monthly_product.sku, "product_title" => monthly_product.product_title, "shopify_product_id" => monthly_product.shopify_product_id, "shopify_variant_id" => monthly_product.shopify_variant_id}
         when new_ellie_3pack_id
-        stuff_to_return = {"sku" => ellie_3pack.sku, "product_title" => ellie_3pack.product_title, "shopify_product_id" => ellie_3pack.shopify_product_id, "shopify_variant_id" => ellie_3pack.shopify_variant_id}      
+        stuff_to_return = {"sku" => ellie_3pack.sku, "product_title" => ellie_3pack.product_title, "shopify_product_id" => ellie_3pack.shopify_product_id, "shopify_variant_id" => ellie_3pack.shopify_variant_id}
         else
         #Give them the Alt 3-Pack
         stuff_to_return = {"sku" => ellie_3pack.sku, "product_title" => ellie_3pack.product_title, "shopify_product_id" => ellie_3pack.shopify_product_id, "shopify_variant_id" => ellie_3pack.shopify_variant_id}
@@ -129,7 +164,7 @@ module ResqueHelper
         return stuff_to_return
     end
 
-    
+
 
     def update_subscription_product(params)
         Resque.logger = Logger.new("#{Dir.getwd}/logs/update_subs_resque.log")
@@ -137,7 +172,7 @@ module ResqueHelper
         my_now = Time.now
         recharge_change_header = params['recharge_change_header']
         Resque.logger.info recharge_change_header
-        
+
         my_subs = SubscriptionsUpdated.where("updated = ?", false)
         my_subs.each do |sub|
             Resque.logger.info sub.inspect
@@ -171,15 +206,15 @@ module ResqueHelper
             if duration > 480
                 Resque.logger.info "Been running more than 8 minutes must exit"
                 exit
-                
+
             end
-            
+
         end
-        Resque.logger.info "All Done, all subscriptions updated!" 
+        Resque.logger.info "All Done, all subscriptions updated!"
 
     end
 
-    
+
 
 
 end
