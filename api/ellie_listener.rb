@@ -405,7 +405,6 @@ class EllieListener < Sinatra::Base
     local_tags = old_prod.tags.split(",")
     local_tags.each do |x|
       if x.include? "#{Time.now.strftime('%m%y')}_"
-        @og_tag = x
         @match_tag = x
         @match_tag[-1] = '5'
         break
@@ -416,7 +415,6 @@ class EllieListener < Sinatra::Base
     my_action = myjson['action']
     myjson['new_product_id'] = new_product_data.shopify_id
     myjson['recharge_change_header'] = @recharge_change_header
-    puts "-----upgrading from #{@og_tag} to #{new_product_data.title} with tags: #{new_product_data.tags}-----"
 
     if my_action == "upgrade_subscription"
       #Add code to immediately update subscription upgrade here
