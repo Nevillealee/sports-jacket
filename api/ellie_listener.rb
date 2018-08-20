@@ -399,14 +399,16 @@ class EllieListener < Sinatra::Base
     puts '----------'
     local_sub = Subscription.find(subscription_id)
       return [404, @default_headers, {error: 'subscription not found'}.to_json] if local_sub.nil?
-    old_prod = Product.find_by shopify_id: myjson['product_id']
+      old_prod = Product.find_by shopify_id: myjson['product_id']
+      return [403, @default_headers,
+        { error: "5 Item products cannot be upgraded. received product id: #{myjson['product_id']}"}.to_json] if old_prod.title.include?("5 Item")
     local_tags = old_prod.tags.split(",")
-
     local_tags.each do |x|
       if x.include? "#{Time.now.strftime('%m%y')}_"
         @og_tag = x
         @match_tag = x
         @match_tag[-1] = '5'
+        break
       end
     end
 
@@ -419,7 +421,6 @@ class EllieListener < Sinatra::Base
     if my_action == "upgrade_subscription"
       #Add code to immediately update subscription upgrade here
       puts "Updating customer record immediately!"
-      local_sub = Subscription.find_by_subscription_id(subscription_id)
       puts "local_sub = #{local_sub.inspect}"
       my_variant = EllieVariant.find_by product_id: new_product_data.shopify_id
 
