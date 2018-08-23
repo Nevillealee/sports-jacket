@@ -186,8 +186,13 @@ class Subscription < ActiveRecord::Base
     sub.recharge_update!
   end
 
-  def prepaid?
-    ProductTag.active.where(tag: 'prepaid').pluck(:product_id).include? shopify_product_id
+  def prepaid_skippable?
+    now = Time.zone.now
+    if created_at < (now - 1.month)
+      ProductTag.active.where(tag: 'prepaid').pluck(:product_id).include? shopify_product_id
+    else
+      return false
+    end
   end
 
   def active?(time = nil)
@@ -199,10 +204,12 @@ class Subscription < ActiveRecord::Base
   # evaluated options are:
   #   time: the time of the skip action
   #   theme_id: the theme_id for checking appropriate ProductTags
+
+  # if prepaid created at date needs to be at least 1 month in past to day
+  # inside skip_conditions
   def skippable?(options = {})
     now = options[:time] || Time.zone.now
     skip_conditions = [
-      !prepaid?,
       active?,
       now.day < 5,
       ProductTag.active(options).where(tag: 'skippable')

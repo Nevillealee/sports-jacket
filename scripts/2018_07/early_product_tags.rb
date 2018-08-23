@@ -10,6 +10,12 @@ early_tag = { active_start: nil, active_end: month_end }
 # sunset the old tags without an active_end
 ProductTag.where(active_end: nil).update_all(active_end: month_start - 1.second)
 
+# main: prepaid products
+prepaid_3 = 123445
+prepaid_5 = 123455
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'prepaid').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'prepaid').update(early_tag)
+
 # main: Print Paradise
 main_3 = 1446651330618
 main_5 = 1446647234618

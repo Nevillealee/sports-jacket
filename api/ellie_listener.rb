@@ -2,8 +2,6 @@ require_relative 'config/environment'
 require_relative '../lib/recharge_active_record'
 require_relative '../lib/logging'
 
-
-
 class EllieListener < Sinatra::Base
   register Sinatra::ActiveRecordExtension
   include Logging
@@ -240,7 +238,7 @@ class EllieListener < Sinatra::Base
     output = {subscription: subscription}
     [200, @default_headers, output.to_json]
   end
-
+  # /subscription/:subscription_id/skip is old code
   post '/subscription/:subscription_id/skip' do |subscription_id|
     sub = Subscription.find subscription_id
     return [404, @default_headers, {error: 'subscription not found'}.to_json] if sub.nil?
@@ -304,47 +302,66 @@ class EllieListener < Sinatra::Base
   end
 
   post '/subscription_skip' do
-    #json = JSON.parse request.body
+    # json = JSON.parse request.body
     puts "Received skip request"
     puts params.inspect
     params['recharge_change_header'] = @recharge_change_header
     my_action = params['action']
     my_now = Date.current.day
     puts "Day of the month is #{my_now}"
-    if Time.zone.now.day < 5
+    # if Time.zone.now.day < 5
       if my_action == "skip_month"
         #Add code to immediately skip the sub in DB only here
         local_sub_id = params['subscription_id']
         temp_subscription = Subscription.find_by_subscription_id(local_sub_id)
-        #code here for checking if subscription is skippable
-        if temp_subscription.skippable?
-
+        # if temp_subscription.prepaid_skippable?
+          #change all active pending orders scheduled_at date
+          # change local records here and api record in background
           puts "temp_subscription = #{temp_subscription.inspect}"
-          local_date = temp_subscription.next_charge_scheduled_at
-          my_next_charge = temp_subscription.try(:next_charge_scheduled_at).try('+', 1.month)
-          puts "now next_charge = #{my_next_charge.inspect}"
-          #Code to prevent skipping two months ahead
-          mynow = Date.today
-          my_next_month = mynow >> 1
-          my_end_next_month = my_next_month.end_of_month
-          puts "End of next month is #{my_end_next_month.inspect}"
-          if my_next_charge <= my_end_next_month
+          # TODO(Neville Lee): change status = 'SUCCESS' to 'QUEUED'
+          sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]' AND status = 'SUCCESS';"
+          my_queued_orders = Order.find_by_sql(sql_query)
 
-            temp_subscription.next_charge_scheduled_at = my_next_charge
-            temp_subscription.save!
-            puts "temp_subscription = #{temp_subscription.inspect}"
-            Resque.enqueue_to(:skip_product, 'SubscriptionSkip', params)
-          else
-            puts "Cannot skip to beyond next month: #{my_next_charge}"
+          my_queued_orders.each do |order|
+            temp_order = order
+            my_time = temp_order.scheduled_at
+            puts "was scheduled_at: #{my_time}"
+            temp_order.scheduled_at = my_time + 1.month
+            puts "now scheduled for: #{temp_order.scheduled_at}"
+            puts temp_order.inspect
+            puts "============================================="
+            # temp_order.save!
           end
-        else
-          puts "Subscription #{temp_subscription.inspect} is not skippable!"
-        end
-      else
-        puts "Cannot skip this product, action must be skip_month not #{my_action}"
-      end
-    else
-      puts "It is past the 4th of the month, cannot skip"
+          Resque.enqueue_to(:skip_product, 'SubscriptionSkipPrepaid', params)
+          #code here for checking if subscription is skippable
+        # elsif temp_subscription.skippable?
+
+    #       puts "temp_subscription = #{temp_subscription.inspect}"
+    #       local_date = temp_subscription.next_charge_scheduled_at
+    #       my_next_charge = temp_subscription.try(:next_charge_scheduled_at).try('+', 1.month)
+    #       puts "now next_charge = #{my_next_charge.inspect}"
+    #       #Code to prevent skipping two months ahead
+    #       mynow = Date.today
+    #       my_next_month = mynow >> 1
+    #       my_end_next_month = my_next_month.end_of_month
+    #       puts "End of next month is #{my_end_next_month.inspect}"
+    #       if my_next_charge <= my_end_next_month
+    #
+    #         temp_subscription.next_charge_scheduled_at = my_next_charge
+    #         temp_subscription.save!
+    #         puts "temp_subscription = #{temp_subscription.inspect}"
+    #         Resque.enqueue_to(:skip_product, 'SubscriptionSkip', params)
+    #       else
+    #         puts "Cannot skip to beyond next month: #{my_next_charge}"
+    #       end
+    #     else
+    #       puts "Subscription #{temp_subscription.inspect} is not skippable!"
+    #     end
+    #   else
+    #     puts "Cannot skip this product, action must be skip_month not #{my_action}"
+    #   end
+    # else
+    #   puts "It is past the 4th of the month, cannot skip"
     end
   end
 
@@ -420,17 +437,16 @@ class EllieListener < Sinatra::Base
       #Add code to immediately update subscription upgrade here
       puts "Updating customer record immediately!"
       puts "local_sub = #{local_sub.inspect}"
-      my_variant = EllieVariant.find_by product_id: new_product_data.shopify_id
 
+      my_variant = EllieVariant.find_by product_id: new_product_data.shopify_id
       local_sub.shopify_product_id = new_product_data.shopify_id
       local_sub.shopify_variant_id = my_variant.variant_id
       local_sub.sku = my_variant.sku
       local_sub.product_title = new_product_data.title
       local_sub.price = my_variant.price
-
       my_line_items = local_sub.raw_line_item_properties
+
       my_line_items.map do |mystuff|
-          # puts "#{key}, #{value}"
           if mystuff['name'] == 'product_collection'
             mystuff['value'] = new_product_data.title
           end
@@ -442,8 +458,6 @@ class EllieListener < Sinatra::Base
     else
       puts "Can't upgrade subscription, action must be 'upgrade_subscription' not #{my_action}"
     end
-
-
   end
 
   error ActiveRecord::RecordNotFound do
