@@ -19,7 +19,8 @@ class Subscription < ActiveRecord::Base
   # * :time - a valid datetime string / object
   # * :theme_id - the theme the product tag is associated with
   def self.current_products(options = {})
-    where(shopify_product_id: ProductTag.active(options).where(tag: 'current').pluck(:product_id))
+    # where(shopify_product_id: ProductTag.active(options).where(tag: ['current', 'prepaid']).pluck(:product_id))
+    where(shopify_product_id: ProductTag.active(options).where("tag = ? or tag = ?", 'current', 'prepaid').pluck(:product_id))
   end
 
   # the options this method takes are:
@@ -186,13 +187,29 @@ class Subscription < ActiveRecord::Base
     sub.recharge_update!
   end
 
+  def prepaid?
+    ProductTag.active.where(tag: 'prepaid').pluck(:product_id).include? shopify_product_id
+  end
+
   def prepaid_skippable?
-    now = Time.zone.now
-    if created_at < (now - 1.month)
-      ProductTag.active.where(tag: 'prepaid').pluck(:product_id).include? shopify_product_id
-    else
-      return false
-    end
+    today = Time.zone.now.day
+    order_check = check_prepaid_orders(subscription_id)
+    skip_conditions = [
+      prepaid?,
+      order_check,
+      # TODO(Neville Lee): uncomment code below when done testing
+      # today < 5,
+    ]
+    skip_conditions.all?
+  end
+
+  def prepaid_switchable?
+    order_check = check_prepaid_orders(subscription_id)
+    skip_conditions = [
+      prepaid?,
+      order_check,
+    ]
+    skip_conditions.all?
   end
 
   def active?(time = nil)
@@ -210,6 +227,7 @@ class Subscription < ActiveRecord::Base
   def skippable?(options = {})
     now = options[:time] || Time.zone.now
     skip_conditions = [
+      !prepaid?,
       active?,
       now.day < 5,
       ProductTag.active(options).where(tag: 'skippable')
@@ -316,6 +334,27 @@ class Subscription < ActiveRecord::Base
         sub.save!
       end
     end
+  end
+
+  def check_prepaid_orders(sub_id)
+    now = Time.zone.now
+    # TODO(Neville Lee): change status = SUCCESS to QUEUED
+    # sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{sub_id}}]' AND status = 'SUCCESS' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{sub_id}}]' AND status = 'SUCCESS' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}';"
+    this_months_orders = Order.find_by_sql(sql_query)
+    puts "===============CHECK PREPAID ORDERS==============="
+    puts this_months_orders.inspect
+    order_check = false
+
+    if this_months_orders != nil
+      this_months_orders.each do |order|
+        if order.scheduled_at > now
+          order_check = true
+        end
+      end
+    end
+
+    return order_check
   end
 
 end

@@ -8,10 +8,11 @@ class MonthlySetup
     @shopify_base_site = "https://#{ENV['SHOPIFY_API_KEY']}:#{ENV['SHOPIFY_SHARED_SECRET']}@#{ENV['SHOPIFY_SHOP_NAME']}.myshopify.com/admin"
     @uri = URI.parse(ENV['DATABASE_URL'])
     @conn = PG.connect(@uri.hostname, @uri.port, nil, nil, @uri.path[1..-1], @uri.user, @uri.password)
+    @next_mon = Date.today >> 1
   end
   # configures switchable_products table --step 1
   def switchable_config
-    current_array = Product.find_by_sql("SELECT * from products where tags NOT LIKE '%AR%' AND tags LIKE '%#{Time.now.strftime('%m%y')}_main%';")
+    current_array = Product.find_by_sql("SELECT * from products where tags NOT LIKE '%AR%' AND tags LIKE '%#{@next_mon.strftime('%m%y')}_main%';")
     my_insert = "insert into switchable_products (product_title, product_id, threepk) values ($1, $2, $3)"
     @conn.prepare('statement1', "#{my_insert}")
     current_array.each do |x|
@@ -25,14 +26,16 @@ class MonthlySetup
   end
   # configures alternate_products table --step 2
   def alternate_config
-    current_array = Product.find_by_sql("SELECT * from products where tags NOT LIKE '%AR%' AND tags LIKE '%#{Time.now.strftime('%m%y')}_alt%';")
+    current_array = Product.find_by_sql("SELECT * from products where tags NOT LIKE '%AR%' AND tags LIKE '%#{@next_mon.strftime('%m%y')}_alt%';")
     my_insert = "insert into alternate_products (product_title, product_id, variant_id, sku, product_collection) values ($1, $2, $3, $4, $5)"
     @conn.prepare('statement1', "#{my_insert}")
     current_array.each do |x|
       product_title = x.title
       product_id = x.id
-      variant_id = x.variants[0]['id']
-      sku = x.variants[0]['sku']
+      # variant_id = x.variants[0]['id']
+      variant_id = EllieVariant.find_by(product_id: x.id).variant_id
+      # sku = x.variants[0]['sku']
+      sku = EllieVariant.find_by(product_id: x.id).sku
       # TODO(Neville): adjust for edge cases i.e. Items => Item etc..
       product_collection = x.title
       @conn.exec_prepared('statement1', [product_title, product_id, variant_id, sku, product_collection])
@@ -46,7 +49,7 @@ class MonthlySetup
     current_array = Product.find_by_sql(
       "SELECT * from products
       WHERE tags NOT LIKE '%AR%'
-      AND tags LIKE '%#{Time.now.strftime('%m%y')}_%'
+      AND tags LIKE '%#{@next_mon.strftime('%m%y')}_%'
       ORDER BY (title);")
     my_insert = "insert into matching_products (new_product_title, incoming_product_id, threepk, outgoing_product_id) values ($1, $2, $3, $4)"
     @conn.prepare('statement1', "#{my_insert}")
