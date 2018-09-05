@@ -17,7 +17,7 @@ class Order < ActiveRecord::Base
   # column for that information.
   #
   # See: https://stackoverflow.com/questions/17879024/activerecordsubclassnotfound-the-single-table-inheritance-mechanism-failed-to
-  self.inheritance_column = nil
+  # self.inheritance_column = nil
   self.primary_key = :order_id
 
   has_one :line_items_fixed, class_name: 'OrderLineItemsFixed'

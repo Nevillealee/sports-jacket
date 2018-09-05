@@ -46,7 +46,7 @@ class SendEmailToCustomer
                 content = Content.new(type: 'text/plain', value: mybody)
             when 'switching_product'
                 puts "switching product"
-                
+
                 my_details = "Your new subscription is for: #{details['product_title']}"
                 puts "my_details for content = #{my_details}"
                 mybody = "Dear #{first_name} #{last_name}:\n\n Here is your confirmation of the change to your subscription:\n\n #{my_details} \n\n Your friends at Ellie."
@@ -60,7 +60,7 @@ class SendEmailToCustomer
                 puts "details = #{details.inspect}"
                 new_charge_date = details['date']
                 puts "new_charge_date = #{new_charge_date}"
-                
+
                 my_details = "Your new charge date is: #{new_charge_date}"
                 mybody = "Dear #{first_name} #{last_name}:\n\n Here is your confirmation of the new charge date for your subscription:\n\n #{my_details} \n\n Your friends at Ellie."
                 subject = "Confirmation of Skip for Your Subscription"
@@ -78,7 +78,7 @@ class SendEmailToCustomer
             sg = SendGrid::API.new(api_key: ENV['SENDGRID_API_KEY'], host: 'https://api.sendgrid.com')
             response = sg.client.mail._('send').post(request_body: mail.to_json)
             puts response.headers
-        rescue Exception => e 
+        rescue Exception => e
             Resque.logger.error(e.inspect)
         else
             puts "Email sent to customer!"
@@ -98,7 +98,7 @@ class SendEmailToCS
         puts params.inspect
         subscription_id = params['subscription_id']
         myaction = params['action']
-        details = params['details']
+        details = params['details'].to_json
         subscription = Subscription.find(subscription_id)
         subscription_product_title = subscription.product_title
         customer_id = subscription.customer_id
@@ -119,7 +119,7 @@ class SendEmailToCS
             sg = SendGrid::API.new(api_key: ENV['SENDGRID_API_KEY'], host: 'https://api.sendgrid.com')
             response = sg.client.mail._('send').post(request_body: mail.to_json)
             puts response.headers
-        rescue Exception => e 
+        rescue Exception => e
             Resque.logger.error(e.inspect)
         else
             puts "Email sent to customer service."

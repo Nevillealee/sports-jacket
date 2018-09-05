@@ -2,7 +2,6 @@
 # products must be manually tagged FIRST
 # according to specs in worker/monthly_setup.rb
 require_relative '../../config/environment'
-# TODO(Neville): replace @next_mon with @next_mon
 @next_mon = Date.today >> 1
 
 month_start = Time.local("#{@next_mon.strftime('%Y')}", "#{@next_mon.strftime('%m')}")

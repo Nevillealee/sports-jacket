@@ -1,4 +1,3 @@
-#resque_helper
 require_relative '../lib/logging'
 
 module ResqueHelper
@@ -53,46 +52,57 @@ module ResqueHelper
       return stuff_to_return
 
   end
-
-  def provide_current_orders(myprod_id, incoming_product_id, subscription_id, new_product_id)
+  # Internal: returns line_items of orders belonging to the subscription_id argument that
+  #           havent been shipped(status=QUEUED) and are scheduled to ship after today/same month
+  #
+  # myprod_id - product id of the current product collection user is subscribed to
+  # new_product_id - product id of the users desired product collection
+  def provide_current_orders(myprod_id, subscription_id, new_product_id)
     now = Time.zone.now
     old_product = Product.find_by(shopify_id: myprod_id)
     my_new_product = Product.find_by(shopify_id: new_product_id)
     my_new_variant = EllieVariant.find_by(product_id: new_product_id)
     updated_line_item = []
-    # TODO(Neville Lee): update sql_query to filter by QUEUED status and scheduled_at dates within the month after today
-    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]' AND status = 'SUCCESS' AND scheduled_at > '#{now.end_of_month.strftime('%F %T')}';"
-    # sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]' AND status = 'SUCCESS' AND scheduled_at > '#{now.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]' AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
     my_orders = Order.find_by_sql(sql_query)
-    puts "my_orders before update: #{my_orders.inspect}"
+    my_order_id = ''
+
     my_orders.each do |temp_order|
       temp_order.line_items.each do |l_item|
         begin
-          # if l_item["product_title"].include?(old_product.title)
-          if l_item["product_title"].include?("Meet")
-            puts "current: #{old_product.title} == line_item prod title: #{l_item['product_title']}"
-            puts "updating l_item with new: #{my_new_product.title}"
-            l_item['shopify_product_id'] = my_new_product.shopify_id
-            l_item['shopify_variant_id'] = my_new_variant.variant_id
-            l_item['sku'] = my_new_variant.sku
-            l_item['product_title'] = my_new_product.title
-            l_item['title'] = my_new_product.title
+        # include?(my_new_product.title) to only alter line_item properties of product
+        # being switched in event customer has multiple products in one order
+        # i.e. '3 - Item collection' and 'yoga pant'
+        if l_item["product_title"].include?(my_new_product.title)
+          puts "current: #{old_product.title} == line_item prod title: #{l_item['product_title']}"
+          puts "updating l_item with new: #{my_new_product.title}"
+          l_item['shopify_product_id'] = my_new_product.shopify_id
+          l_item['shopify_variant_id'] = my_new_variant.variant_id
+          l_item['sku'] = my_new_variant.sku
+          l_item['product_title'] = my_new_product.title
+          l_item['title'] = my_new_product.title
 
-            l_item['properties'].each do |prop|
-              if prop['name'] == "product_collection"
-                prop['value'] = my_new_product.title
-              end
+          l_item['properties'].each do |prop|
+            if prop['name'] == "product_collection"
+              prop['value'] = my_new_product.title
             end
-            l_item['order_id'] = temp_order.order_id
-            updated_line_item.push(l_item)
           end
+          # l_item['order_id'] custom property added for PUT call params
+          # to Recharge orders/order_id in subscription_switch_prepaid worker
+          updated_line_item.push(l_item)
+        else
+          updated_line_item.push(l_item)
+        end
         rescue => e
-          puts "error: #{e.inspect}"
+          puts "error: #{e}"
         end
       end
+      my_order_id = temp_order.order_id
     end
     puts "PROVIDE CURRENT ORDERS WORKER DONE"
-    return updated_line_item
+    response_hash = { "my_order_id" => my_order_id,
+      "o_array" => updated_line_item }
+    return response_hash
   end
 
   def provide_upgrade_product(new_product_id, subscription_id)

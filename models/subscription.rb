@@ -197,8 +197,7 @@ class Subscription < ActiveRecord::Base
     skip_conditions = [
       prepaid?,
       order_check,
-      # TODO(Neville Lee): uncomment code below when done testing
-      # today < 5,
+      today < 5,
     ]
     skip_conditions.all?
   end
@@ -338,12 +337,9 @@ class Subscription < ActiveRecord::Base
 
   def check_prepaid_orders(sub_id)
     now = Time.zone.now
-    # TODO(Neville Lee): change status = SUCCESS to QUEUED
-    # sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{sub_id}}]' AND status = 'SUCCESS' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
-    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{sub_id}}]' AND status = 'SUCCESS' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}';"
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{sub_id}}]' AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
     this_months_orders = Order.find_by_sql(sql_query)
-    puts "===============CHECK PREPAID ORDERS==============="
-    puts this_months_orders.inspect
+    puts "CHECK PREPAID ORDERS SUB METHOD BLOCK"
     order_check = false
 
     if this_months_orders != nil

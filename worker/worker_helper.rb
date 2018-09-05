@@ -1196,9 +1196,6 @@ module EllieHelper
       def background_load_full_charges(sleep_recharge, num_charges, header_info, uri)
         Resque.logger = Logger.new("#{Dir.getwd}/logs/charge_pull.log")
         Resque.logger.info "starting FULL download"
-        #logger.info "starting FULL download"
-
-
         Resque.logger.debug header_info
         Resque.logger.debug uri
         myuri = URI.parse(uri)
@@ -1374,9 +1371,9 @@ module EllieHelper
           sleep sleep_recharge.to_i
         end
         Resque.logger.info "All done with charges"
+        logger.info "All done with charges"
         Resque.logger.info "Ran #{(Time.now - start).ceil} seconds"
       end
-
 
       def get_order_full(params)
         option_value = params['option_value']
@@ -1822,7 +1819,6 @@ module EllieHelper
 
       end
 
-
       def background_count_orders(my_header)
         #We only care about orders back to FOUR months ago
         #This way we can be sure to get all the orders for a three months subscriber
@@ -1836,7 +1832,6 @@ module EllieHelper
         return num_orders
 
       end
-
 
       def background_load_full_orders(sleep_recharge, num_orders, header_info, uri)
         myuri = URI.parse(uri)
@@ -1962,7 +1957,6 @@ module EllieHelper
         logger.info "All done with FULL order download"
         conn.close
       end
-
 
       def get_sub_full(params)
         option_value = params['option_value']

@@ -288,20 +288,13 @@ class EllieListener < Sinatra::Base
       local_sub = Subscription.find_by_subscription_id(local_sub_id)
       puts "local_sub = #{local_sub.inspect}"
       #Add code to immediately update subscription switch below
-      # if local_sub.prepaid_switchable?
-      if true
-        # TODO(Neville Lee): change AND status = 'SUCCESS' to 'QUEUED and replace commented sql_query statement'
-        # sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]' AND status = 'SUCCESS' AND scheduled_at > '#{now.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
-        sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]' AND status = 'SUCCESS' AND scheduled_at > '2018-08-16 00:00:00' AND scheduled_at < '2018-09-29 00:00:00';"
+      if local_sub.prepaid_switchable?
+        sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]' AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
         my_orders = Order.find_by_sql(sql_query)
-        puts old_product.title
-        # puts "this months orders for local_sub: #{my_orders.inspect}"
+        updated = false
         my_orders.each do |temp_order|
-          updated = false
           temp_order.line_items.each do |my_hash|
-            # TODO(Neville Lee): use commented out code when done testing and include? argument
-            # if my_hash["product_title"].include?(old_product.title)
-            if my_hash["product_title"].include?("Meet")
+            if my_hash["product_title"].include?(old_product.title)
               puts "FOUND MATCHING Line Item based on title: #{old_product.title}"
               my_hash['shopify_product_id'] = my_new_product.product_id
               my_hash['shopify_variant_id'] = my_new_product.variant_id
@@ -319,18 +312,24 @@ class EllieListener < Sinatra::Base
               updated = true
             end
           end
-          # temp_order.save if updated == true
+          temp_order.save if updated == true
           Resque.enqueue_to(:switch_product, 'SubscriptionSwitchPrepaid', myjson)
         end
+
+        if updated == true
+          [200, @default_headers, {message: "Prepaid subscription successfully updated"}.to_json]
+        else
+          [500, @default_headers, {message: "error within orders, see logs"}.to_json]
+        end
+
       elsif !local_sub.prepaid_switchable?
         local_sub.shopify_product_id = my_new_product.product_id
         local_sub.shopify_variant_id = my_new_product.variant_id
         local_sub.sku = my_new_product.sku
         local_sub.product_title = my_new_product.product_title
-        # TODO(Neville Lee) uncomment commented out code below in elsif block
-        # local_sub.save!
+        local_sub.save!
 
-        # Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
+        Resque.enqueue_to(:switch_product, 'SubscriptionSwitch', myjson)
       else
         puts "Can't switch product, action must be switch product not #{my_action}"
       end
@@ -351,11 +350,8 @@ class EllieListener < Sinatra::Base
         local_sub_id = params['subscription_id']
         temp_subscription = Subscription.find_by_subscription_id(local_sub_id)
         if temp_subscription.prepaid_skippable?
-          #change all active pending orders scheduled_at date
-          # change local records here and api record in background job
           puts "temp_subscription = #{temp_subscription.inspect}"
-          # TODO(Neville Lee): change status = 'SUCCESS' to 'QUEUED' and test save method
-          sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]' AND status = 'SUCCESS';"
+          sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]' AND status = 'QUEUED';"
           my_queued_orders = Order.find_by_sql(sql_query)
 
           my_queued_orders.each do |order|
@@ -366,7 +362,7 @@ class EllieListener < Sinatra::Base
             puts "now scheduled for: #{temp_order.scheduled_at}"
             puts temp_order.inspect
             puts "============================================="
-            # temp_order.save
+            temp_order.save
           end
 
           Resque.enqueue_to(:skip_product, 'SubscriptionSkipPrepaid', params)
