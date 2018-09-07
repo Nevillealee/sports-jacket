@@ -93,6 +93,39 @@ module ResqueHelper
 
     end
 
+    def provide_downgrade_product(new_product_id, subscription_id)
+      my_new_product = Product.find_by shopify_id: new_product_id
+      puts "(provide_downgrade_product) new product info is #{my_new_product.inspect}"
+      my_sub = Subscription.find_by_subscription_id(subscription_id)
+      my_variant = EllieVariant.find_by product_id: new_product_id
+      puts my_sub.inspect
+      my_line_items = my_sub.raw_line_item_properties
+      puts my_line_items.inspect
+      found_collection = false
+
+      my_line_items.map do |mystuff|
+          #puts "#{key}, #{value}"
+          if mystuff['name'] == 'product_collection'
+              mystuff['value'] = my_new_product.title
+              found_collection = true
+          end
+      end
+      puts "my_line_items = #{my_line_items.inspect}"
+
+      if found_collection == false
+           #only if I did not find the product_collection property in the line items do I need to add it
+          puts "We are adding the product collection to the line item properties"
+          my_line_items << {"name" => "product_collection", "value" => my_new_product.title}
+      else
+          puts "We have already updated the product_collection value!"
+      end
+
+      stuff_to_return = { "price" => my_variant.price, "sku" => my_variant.sku, "product_title" => my_new_product.title, "shopify_product_id" => my_new_product.shopify_id, "shopify_variant_id" => my_variant.variant_id, "properties" => my_line_items }
+      logger.info "HASH GOING TO RECHARGE: #{stuff_to_return.inspect}"
+      return stuff_to_return
+
+    end
+
     def setup_subscription_update(params)
         uri = URI.parse(ENV['DATABASE_URL'])
         conn = PG.connect(uri.hostname, uri.port, nil, nil, uri.path[1..-1], uri.user, uri.password)
@@ -164,8 +197,6 @@ module ResqueHelper
         return stuff_to_return
     end
 
-
-
     def update_subscription_product(params)
         Resque.logger = Logger.new("#{Dir.getwd}/logs/update_subs_resque.log")
         Resque.logger.info "For updating subscriptions Got params #{params.inspect}"
@@ -213,8 +244,5 @@ module ResqueHelper
         Resque.logger.info "All Done, all subscriptions updated!"
 
     end
-
-
-
 
 end
