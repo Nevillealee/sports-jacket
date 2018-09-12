@@ -515,7 +515,7 @@ class EllieListener < Sinatra::Base
     if sub.prepaid?
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
-      title_value = sub.get_prepaid_product.line_items[0]['product_title']
+      title_value = sub.get_prepaid_title
     else
       skip_value = sub.skippable?
       switch_value = sub.switchable?
