@@ -289,7 +289,10 @@ class EllieListener < Sinatra::Base
       puts "local_sub = #{local_sub.inspect}"
       #Add code to immediately update subscription switch below
       if local_sub.prepaid_switchable?
-        sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]' AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
+        sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]'
+                    AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}'
+                    AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                    AND is_prepaid = 1;"
         my_orders = Order.find_by_sql(sql_query)
         updated = false
         my_orders.each do |temp_order|
@@ -512,14 +515,16 @@ class EllieListener < Sinatra::Base
     if sub.prepaid?
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
+      title_value = sub.get_prepaid_product.line_items[0]['product_title']
     else
       skip_value = sub.skippable?
       switch_value = sub.switchable?
+      title_value = sub.product_title
     end
     result = {
       shopify_product_id: sub.shopify_product_id.to_i,
       subscription_id: sub.subscription_id.to_i,
-      product_title: sub.product_title,
+      product_title: title_value,
       next_charge: sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')},
       charge_date: sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')},
       sizes: sub.sizes,

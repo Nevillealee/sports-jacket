@@ -319,6 +319,16 @@ class Subscription < ActiveRecord::Base
     ProductTag.active.where(tag: 'current').pluck(:product_id).include? shopify_product_id
   end
 
+  def get_prepaid_product
+    now = Time.zone.now
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
+                AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
+                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                AND is_prepaid = 1;"
+    my_order = Order.find_by_sql(sql_query).first
+    return my_order
+  end
+
   private
 
   def update_line_items
@@ -337,7 +347,10 @@ class Subscription < ActiveRecord::Base
 
   def check_prepaid_orders(sub_id)
     now = Time.zone.now
-    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{sub_id}}]' AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{sub_id}}]'
+                AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
+                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                AND is_prepaid = 1;"
     this_months_orders = Order.find_by_sql(sql_query)
     puts "CHECK PREPAID ORDERS SUB METHOD BLOCK"
     order_check = false

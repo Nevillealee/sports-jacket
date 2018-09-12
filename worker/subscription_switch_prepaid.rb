@@ -19,14 +19,14 @@ class SubscriptionSwitchPrepaid
     puts "We are working on subscription #{subscription_id}"
     Resque.logger.info("We are working on subscription #{subscription_id}")
     response_hash = provide_current_orders(product_id, subscription_id, new_product_id)
-    my_order_array = response_hash['o_array']
+    updated_order_data = response_hash['o_array']
     my_order_id = response_hash['my_order_id']
     updated_line_items = []
-    Resque.logger.info("new product info for subscription(#{subscription_id})'s orders are: #{my_order_array.inspect}")
+    Resque.logger.info("new product info for subscription(#{subscription_id})'s orders are: #{updated_order_data.inspect}")
     recharge_change_header = params['recharge_change_header']
     puts recharge_change_header
 
-    my_order_array.each do |l_item|
+    updated_order_data.each do |l_item|
       my_line_item = {
         "quantity" => l_item['quantity'].to_i,
         "product_id" => l_item['shopify_product_id'].to_i,

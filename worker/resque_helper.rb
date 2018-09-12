@@ -63,7 +63,10 @@ module ResqueHelper
     my_new_product = Product.find_by(shopify_id: new_product_id)
     my_new_variant = EllieVariant.find_by(product_id: new_product_id)
     updated_line_item = []
-    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]' AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}' AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}';"
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
+                AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}'
+                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
+                AND is_prepaid = 1;"
     my_orders = Order.find_by_sql(sql_query)
     my_order_id = ''
 
@@ -73,9 +76,8 @@ module ResqueHelper
         # include?(my_new_product.title) to only alter line_item properties of product
         # being switched in event customer has multiple products in one order
         # i.e. '3 - Item collection' and 'yoga pant'
-        if l_item["product_title"].include?(my_new_product.title)
-          puts "current: #{old_product.title} == line_item prod title: #{l_item['product_title']}"
-          puts "updating l_item with new: #{my_new_product.title}"
+        if l_item["subscription_id"] == subscription_id
+          puts "updating l_item with new: #{my_new_product.title} data"
           l_item['shopify_product_id'] = my_new_product.shopify_id
           l_item['shopify_variant_id'] = my_new_variant.variant_id
           l_item['sku'] = my_new_variant.sku
