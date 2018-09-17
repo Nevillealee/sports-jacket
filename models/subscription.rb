@@ -319,29 +319,34 @@ class Subscription < ActiveRecord::Base
     ProductTag.active.where(tag: 'current').pluck(:product_id).include? shopify_product_id
   end
 
-  def get_prepaid_title
+  def get_order_props(orders)
     now = Time.zone.now
-    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
-                AND status = 'QUEUED' AND scheduled_at > '#{now.beginning_of_month.strftime('%F %T')}'
-                AND scheduled_at < '#{now.end_of_month.strftime('%F %T')}'
-                AND is_prepaid = 1;"
-    my_order = Order.find_by_sql(sql_query).first
-    my_title = ""
-    if my_order != nil
-      my_order.line_items.each do |item|
-        item['properties'].each do |prop|
-          if prop['name'] == "product_collection"
-           my_title = prop['value']
-          end
-        end
+    next_mon = Date.today >> 1
+    my_orders = orders.where(:status => 'QUEUED').order("scheduled_at ASC")
+    my_orders.each do |order|
+      if order.scheduled_at < now.end_of_month.strftime('%F %T')
+        @my_res = line_item_parse(order)
+      elsif order.scheduled_at < next_mon.strftime('%F %T')
+        @my_res = line_item_parse(order)
       end
-      return my_title
-    else
-      return Subscription.find_by_subscription_id(subscription_id).product_title
     end
+    return @my_res
   end
 
   private
+
+  def line_item_parse(order)
+      order.line_items.each do |item|
+        item['properties'].each do |prop|
+          if prop['name'] == "product_collection"
+            return {
+             my_title: prop['value'],
+             ship_date: order.shipping_date,
+            }
+          end
+        end
+      end
+    end
 
   def update_line_items
     return unless saved_change_to_attribute? :raw_line_item_properties

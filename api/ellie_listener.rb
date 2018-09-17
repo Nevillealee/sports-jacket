@@ -514,7 +514,9 @@ class EllieListener < Sinatra::Base
     if sub.prepaid?
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
-      title_value = sub.get_prepaid_title
+      res = sub.get_order_props(orders)
+      title_value = res[:my_title]
+      shipping_date = res[:ship_date].strftime('%F')
     else
       skip_value = sub.skippable?
       switch_value = sub.switchable?
@@ -528,9 +530,10 @@ class EllieListener < Sinatra::Base
       charge_date: sub.next_charge_scheduled_at.try{|time| time.strftime('%Y-%m-%d')},
       sizes: sub.sizes,
       prepaid: sub.prepaid?,
-      prepaid_shipping_at: sub.shipping_at.try{|time| time.strftime('%Y-%m-%d')},
+      # prepaid_shipping_at: sub.shipping_at.try{|time| time.strftime('%Y-%m-%d')},
       skippable: skip_value,
-      can_choose_alt_product: switch_value
+      can_choose_alt_product: switch_value,
+      next_ship_date: shipping_date,
     }
     return result
   end
