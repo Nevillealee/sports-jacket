@@ -287,7 +287,6 @@ class EllieListener < Sinatra::Base
       puts "my_new_product = #{my_new_product.inspect}"
       local_sub = Subscription.find_by_subscription_id(local_sub_id)
       puts "local_sub = #{local_sub.inspect}"
-      #Add code to immediately update subscription switch below
       if local_sub.prepaid_switchable?
         sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{local_sub_id}}]'
                     AND status = 'QUEUED' AND scheduled_at > '#{now.strftime('%F %T')}'

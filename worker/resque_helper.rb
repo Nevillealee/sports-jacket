@@ -56,7 +56,7 @@ module ResqueHelper
   #           havent been shipped(status=QUEUED) and are scheduled to ship after today/same month
   #
   # myprod_id - product id of the current product collection user is subscribed to
-  # new_product_id - product id of the users desired product collection
+  # new_product_id - product id of the users desired product
   def provide_current_orders(myprod_id, subscription_id, new_product_id)
     now = Time.zone.now
     old_product = Product.find_by(shopify_id: myprod_id)
@@ -73,7 +73,6 @@ module ResqueHelper
     my_orders.each do |temp_order|
       temp_order.line_items.each do |l_item|
         begin
-        # include?(my_new_product.title) to only alter line_item properties of product
         # being switched in event customer has multiple products in one order
         # i.e. '3 - Item collection' and 'yoga pant'
         if l_item["subscription_id"] == subscription_id
@@ -85,12 +84,8 @@ module ResqueHelper
           l_item['title'] = my_new_product.title
 
           l_item['properties'].each do |prop|
-            if prop['name'] == "product_collection"
-              prop['value'] = my_new_product.title
-            end
+            prop['value'] = my_new_product.title if (prop['name'] == "product_collection")
           end
-          # l_item['order_id'] custom property added for PUT call params
-          # to Recharge orders/order_id in subscription_switch_prepaid worker
           updated_line_item.push(l_item)
         else
           updated_line_item.push(l_item)
@@ -101,9 +96,12 @@ module ResqueHelper
       end
       my_order_id = temp_order.order_id
     end
+
     puts "PROVIDE CURRENT ORDERS WORKER DONE"
-    response_hash = { "my_order_id" => my_order_id,
-      "o_array" => updated_line_item }
+    response_hash = {
+      "my_order_id" => my_order_id,
+      "o_array" => updated_line_item,
+    }
     return response_hash
   end
 

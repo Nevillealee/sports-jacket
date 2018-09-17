@@ -8,6 +8,7 @@ class SubscriptionSwitchPrepaid
     puts "SUBSCRIPTIONSWITCHPREPAID BLOCK REACHED"
     puts params.inspect
     Resque.logger = Logger.new("#{Dir.getwd}/logs/prepaid_switch_resque.log")
+    updated_line_items = []
 
     subscription_id = params['subscription_id']
     product_id = params['product_id']
@@ -21,7 +22,6 @@ class SubscriptionSwitchPrepaid
     response_hash = provide_current_orders(product_id, subscription_id, new_product_id)
     updated_order_data = response_hash['o_array']
     my_order_id = response_hash['my_order_id']
-    updated_line_items = []
     Resque.logger.info("new product info for subscription(#{subscription_id})'s orders are: #{updated_order_data.inspect}")
     recharge_change_header = params['recharge_change_header']
     puts recharge_change_header
@@ -35,7 +35,7 @@ class SubscriptionSwitchPrepaid
         "properties" => l_item['properties'],
         "title" => l_item['product_title'],
         "sku" => l_item['sku'],
-        "variant_title" => l_item['variant_title']
+        "variant_title" => l_item['variant_title'],
       }
       updated_line_items.push(my_line_item)
     end
@@ -46,7 +46,7 @@ class SubscriptionSwitchPrepaid
                    "product_title" => new_product.title,
                    "shopify_product_id" => new_product.shopify_id,
                    "shopify_variant_id" => new_variant.variant_id,
-                   "properties" => updated_line_items
+                   "properties" => updated_line_items,
                  }
     params = { "subscription_id" => subscription_id, "action" => "switching_product", "details" => my_details }
     # When updating line_items, you need to provide all the data that was in
@@ -57,17 +57,16 @@ class SubscriptionSwitchPrepaid
     Resque.logger.info(my_update_sub.inspect)
     # Below for email to customer
     update_success = false
-
-      if my_update_sub.code == 200
-        Resque.enqueue(SendEmailToCustomer, params)
-        update_success = true
-        puts "****** Hooray We have no errors **********"
-        Resque.logger.info("****** Hooray We have no errors **********")
-      else
-        Resque.enqueue(SendEmailToCS, params)
-        puts "We were not able to update the subscription"
-        Resque.logger.info("We were not able to update the subscription")
-      end
+    if my_update_sub.code == 200
+      Resque.enqueue(SendEmailToCustomer, params)
+      update_success = true
+      puts "****** Hooray We have no errors **********"
+      Resque.logger.info("****** Hooray We have no errors **********")
+    else
+      Resque.enqueue(SendEmailToCS, params)
+      puts "We were not able to update the subscription"
+      Resque.logger.info("We were not able to update the subscription")
+    end
 
   end
 end
