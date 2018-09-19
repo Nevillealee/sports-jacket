@@ -7,6 +7,6 @@
 /logs
 puma.state
 elm-stuff
-.rvmrc
+*.rvmrc
 *.csv
 *.xlsx
