@@ -514,7 +514,7 @@ class EllieListener < Sinatra::Base
     if sub.prepaid?
       skip_value = sub.prepaid_skippable?
       switch_value = sub.prepaid_switchable?
-      res = sub.get_order_props(orders)
+      res = sub.get_order_props
       title_value = res[:my_title]
       shipping_date = res[:ship_date].strftime('%F')
     else

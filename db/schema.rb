@@ -148,6 +148,13 @@ ActiveRecord::Schema.define(version: 20180815221707) do
     t.index ["prod_id_value"], name: "index_current_products_on_prod_id_value"
   end
 
+  create_table "customer_info", force: :cascade do |t|
+    t.string "shopify_id"
+    t.string "subscription_id"
+    t.index ["shopify_id"], name: "index_customer_info_on_shopify_id"
+    t.index ["subscription_id"], name: "index_customer_info_on_subscription_id"
+  end
+
   create_table "customers", force: :cascade do |t|
     t.string "customer_id"
     t.string "customer_hash"
@@ -503,6 +510,7 @@ ActiveRecord::Schema.define(version: 20180815221707) do
     t.index ["customer_id"], name: "index_subscriptions_on_customer_id"
     t.index ["expire_after_specific_number_charges"], name: "index_subscriptions_on_expire_after_specific_number_charges"
     t.index ["subscription_id"], name: "index_subscriptions_on_subscription_id"
+    t.index ["subscription_id"], name: "sub_id", unique: true
   end
 
   create_table "subscriptions_updated", force: :cascade do |t|

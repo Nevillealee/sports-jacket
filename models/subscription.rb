@@ -319,10 +319,12 @@ class Subscription < ActiveRecord::Base
     ProductTag.active.where(tag: 'current').pluck(:product_id).include? shopify_product_id
   end
 
-  def get_order_props(orders)
+  def get_order_props
     now = Time.zone.now
     next_mon = Date.today >> 1
-    my_orders = orders.where(:status => 'QUEUED').order("scheduled_at ASC")
+    sql_query = "SELECT * FROM orders WHERE line_items @> '[{\"subscription_id\": #{subscription_id}}]'
+                AND status = 'QUEUED' AND is_prepaid = 1;"
+    my_orders = Order.find_by_sql(sql_query)
     my_orders.each do |order|
       if order.scheduled_at < now.end_of_month.strftime('%F %T')
         @my_res = line_item_parse(order)

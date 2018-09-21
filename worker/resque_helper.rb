@@ -84,7 +84,9 @@ module ResqueHelper
           l_item['title'] = my_new_product.title
 
           l_item['properties'].each do |prop|
-            prop['value'] = my_new_product.title if (prop['name'] == "product_collection")
+            if prop['name'] == "product_collection"
+              prop['value'] = my_new_product.title
+            end
           end
           updated_line_item.push(l_item)
         else

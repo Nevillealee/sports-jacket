@@ -11,10 +11,12 @@ early_tag = { active_start: nil, active_end: month_end }
 ProductTag.where(active_end: nil).update_all(active_end: month_start - 1.second)
 
 # main: prepaid products (CURRENTLY TEST VALUES)
-prepaid_3 = 614485950496
-# prepaid_5 = 614485950496
+prepaid_3 = 1421100974131
+prepaid_AR1 = 1421098450995
+prepaid_AR2 = 1421105004595
 ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_3, tag: 'prepaid').update(early_tag)
-# ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_5, tag: 'prepaid').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_AR1, tag: 'prepaid').update(early_tag)
+ProductTag.create_with(early_tag).find_or_create_by(product_id: prepaid_AR2, tag: 'prepaid').update(early_tag)
 
 # main Current month
 main_3 = Product.find_by_sql("SELECT shopify_id from products where tags LIKE '%#{@next_mon.strftime('%m%y')}_main_3%';").first.shopify_id
