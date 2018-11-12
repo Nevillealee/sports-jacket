@@ -1,6 +1,11 @@
 language: ruby
 rvm:
- - 2.4
+ - 2.4.0
+ services:
+  - redis-server
+script:
+  - bundle exec rake resque:work QUEUE='*'
+  - cd api ** puma
 sudo: enabled
 branches:
   only:
