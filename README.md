@@ -44,7 +44,6 @@ https://bundler.io/
 * [bundler](https://bundler.io/) - Dependency Management
 
 ## Authors
-
+* **Neville Lee** - *Initial work* - [Nevillealee](https://github.com/nevillealee)
 * **Floyd  Wallace** - *Initial work* - [FLWallace105](https://github.com/FLWallace105)
 * **Ryan Barth** - *Initial work* - [r-bar](https://github.com/r-bar)
-* **Neville Lee** - *Initial work* - [Nevillealee](https://github.com/nevillealee)
