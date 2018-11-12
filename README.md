@@ -24,8 +24,7 @@ $ rake resque:work QUEUE='*'
 $ cd api && puma
 ```
 *optional tunneling with ngrok for testing with postman etc* 
-install ngrok and run inside download directory 
-https://ngrok.com/download
+install [ngrok](https://ngrok.com/download)<br />
 ```
 $ ./ngrok http 9292
 ```
