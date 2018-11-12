@@ -9,5 +9,4 @@ script:
 sudo: enabled
 branches:
   only:
-  - master
   - prepaid_switch_skip
