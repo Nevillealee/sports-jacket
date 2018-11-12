@@ -28,6 +28,12 @@ group :development do
   gem 'rubocop'
 end
 
+group :test do
+  gem 'rake'
+  gem 'rspec'
+  gem "rack-test"
+end
+
 # Added at 2017-12-08 11:42:19 -0800 by ryan:
 #gem "rack-cors", "~> 1.0"
 

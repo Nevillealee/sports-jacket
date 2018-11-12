@@ -1,0 +1,8 @@
+language: ruby
+rvm:
+ - 2.4
+sudo: enabled
+branches:
+  only:
+  - master
+  - prepaid_switch_skip
