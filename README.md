@@ -4,25 +4,31 @@ API written in Ruby using the Sinatra framework with a postgresql database for m
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-
-git clone git@github.com:Nevillealee/sports-jacket.git
-cd into app directory
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system. <br />
+```
+$ git clone git@github.com:Nevillealee/sports-jacket.git
+```
+cd into app directory <br />
+```
 $ bundle install
 $ touch .env
-set up missing enviornment variables using a search in your IDE for 'ENV'
-rake db:setup
-run these taks in seperate terminal tabs:
-1) $ rake redis-server
-2) $ rake resque:work QUEUE='*'
-3) $ cd api && puma
-
+```
+set up missing enviornment variables using a search in your IDE for 'ENV' <br />
+```
+$ rake db:setup
+```
+run these taks in seperate terminal tabs: <br />
+```
+$ rake redis-server
+$ rake resque:work QUEUE='*'
+$ cd api && puma
+```
 *optional tunneling with ngrok for testing with postman etc* 
 install ngrok and run inside download directory 
 https://ngrok.com/download
+```
 $ ./ngrok http 9292
-
-
+```
 ### Prerequisites
 ruby 2.4.0
 bundler
