@@ -1,4 +1,4 @@
-# www.ellie.com API 
+# www.ellie.com api
 
 API written in Ruby using the Sinatra framework with a postgresql database for management of customer accounts.
 
