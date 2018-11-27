@@ -29,8 +29,8 @@ install [ngrok](https://ngrok.com/download)<br />
 $ ./ngrok http 9292
 ```
 ### Prerequisites
-ruby 2.4.0
-bundler
+ruby 2.4.0<br/>
+bundler<br/>
 postgresql libpq-dev
 ```
 https://rvm.io/rvm/install
